@@ -1,32 +1,38 @@
 package app
 
 import (
+	"net/http"
+	"strconv"
+
 	"github.com/gorilla/mux"
 	"github.com/unrolled/render"
 	"jhpark.sinsiway.com/bootstrap/model"
-	"net/http"
-	"strconv"
 )
 
-var rd *render.Render
+var rd *render.Render = render.New()
 
-func indexHandler(w http.ResponseWriter, r *http.Request) {
+type AppHandler struct {
+	http.Handler
+	db model.DbHandler
+}
+
+func (a *AppHandler) indexHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/todo.html", http.StatusTemporaryRedirect)
 }
 
-func getTodoListHandler(w http.ResponseWriter, r *http.Request) {
+func (a *AppHandler) getTodoListHandler(w http.ResponseWriter, r *http.Request) {
 	//var list []*model.Todo
 	//for _, v := range todoMap {
 	//	log.Println("v:", v)
 	//	list = append(list, v)
 	//}
-	list := model.GetTodos()
+	list := a.db.GetTodos()
 	rd.JSON(w, http.StatusOK, list)
 }
 
-func addTodoListHandler(w http.ResponseWriter, r *http.Request) {
+func (a *AppHandler) addTodoListHandler(w http.ResponseWriter, r *http.Request) {
 	name := r.FormValue("name")
-	todo := model.AddTodo(name)
+	todo := a.db.AddTodo(name)
 
 	//id := len(todoMap) + 1
 	//todo := &Todo{id, name, false, time.Now()}
@@ -39,12 +45,12 @@ type Success struct {
 	Success bool `json:"success"`
 }
 
-func removeTodoHandler(w http.ResponseWriter, r *http.Request) {
+func (a *AppHandler) removeTodoHandler(w http.ResponseWriter, r *http.Request) {
 	//vars := mux.Vars(r)
 	//id, _ := strconv.Atoi(vars["id"])
 
 	id, _ := strconv.Atoi(r.FormValue("id"))
-	ok := model.RemoveTodo(id)
+	ok := a.db.RemoveTodo(id)
 	if ok {
 		rd.JSON(w, http.StatusOK, Success{true})
 	} else {
@@ -61,12 +67,12 @@ func removeTodoHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func completeTodoHandler(w http.ResponseWriter, r *http.Request) {
+func (a *AppHandler) completeTodoHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, _ := strconv.Atoi(vars["id"])
 	complete := r.FormValue("complete") == "true"
 
-	ok := model.CompleteTodo(id, complete)
+	ok := a.db.CompleteTodo(id, complete)
 	if ok {
 		rd.JSON(w, http.StatusOK, Success{true})
 	} else {
@@ -87,19 +93,25 @@ func completeTodoHandler(w http.ResponseWriter, r *http.Request) {
 //	todoMap[3] = &Todo{3, "Init Data3", false, time.Now()}
 //}
 
-func MakeHandler() http.Handler {
+func (a *AppHandler) Close() {
+	a.db.Close()
+}
+
+func MakeHandler() *AppHandler {
 	//todoMap = make(map[int]*Todo)
 	//addTestTodo()
-	rd = render.New()
 
 	r := mux.NewRouter()
-
-	r.HandleFunc("/todos", getTodoListHandler).Methods("GET")
-	r.HandleFunc("/todos", addTodoListHandler).Methods("POST")
-	r.HandleFunc("/todos", removeTodoHandler).Methods("DELETE")
+	app := &AppHandler{
+		Handler: r,
+		db:      model.NewDbHandler(),
+	}
+	r.HandleFunc("/todos", app.getTodoListHandler).Methods("GET")
+	r.HandleFunc("/todos", app.addTodoListHandler).Methods("POST")
+	r.HandleFunc("/todos", app.removeTodoHandler).Methods("DELETE")
 	//r.HandleFunc("/todos/{id:[0-9]+}", removeTodoHandler).Methods("DELETE")
-	r.HandleFunc("/complete-todo/{id:[0-9]+}", completeTodoHandler).Methods("GET")
+	r.HandleFunc("/complete-todo/{id:[0-9]+}", app.completeTodoHandler).Methods("GET")
 
-	r.HandleFunc("/", indexHandler)
-	return r
+	r.HandleFunc("/", app.indexHandler)
+	return app
 }

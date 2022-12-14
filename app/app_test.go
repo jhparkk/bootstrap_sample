@@ -3,20 +3,21 @@ package app
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/stretchr/testify/assert"
-	"jhpark.sinsiway.com/bootstrap/model"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"strconv"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"jhpark.sinsiway.com/bootstrap/model"
 )
 
 func TestTodos(t *testing.T) {
+
 	assert := assert.New(t)
 	ts := httptest.NewServer(MakeHandler())
 	defer ts.Close()
-
 	//
 	// POST /todos
 	//
@@ -24,6 +25,7 @@ func TestTodos(t *testing.T) {
 	//
 	res, err := http.PostForm(ts.URL+"/todos", url.Values{"name": {"Test todos1"}})
 	assert.NoError(err)
+
 	assert.Equal(http.StatusOK, res.StatusCode)
 
 	var todo model.Todo

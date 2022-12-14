@@ -5,49 +5,38 @@ import (
 )
 
 type Todo struct {
-	Id        int       `json:"id" gorm:"column:id"`
+	Id        int       `json:"id" gorm:"column:id;primary key;autoincrement"`
 	Name      string    `json:"name" gorm:"column:name"`
 	Completed bool      `json:"completed" gorm:"column:completed"`
 	CreateAt  time.Time `json:"create_at" gorm:"column:create_at"`
 }
 
-var todoMap map[int]*Todo
-
-func init() {
-	todoMap = make(map[int]*Todo)
+type DbHandler interface {
+	GetTodos() []*Todo
+	AddTodo(name string) *Todo
+	RemoveTodo(id int) bool
+	CompleteTodo(id int, complete bool) bool
+	Close()
 }
 
+func NewDbHandler() DbHandler {
+	return newSqlite3Handler()
+}
+
+/*
 func GetTodos() []*Todo {
-	var list []*Todo
-	for _, v := range todoMap {
-		//log.Println("v:", v)
-		list = append(list, v)
-	}
-	return list
+	return handler.GetTodos()
 }
 
 func AddTodo(name string) *Todo {
-	id := len(todoMap) + 1
-	todo := &Todo{id, name, false, time.Now()}
-	todoMap[id] = todo
-
-	return todo
+	return handler.AddTodo(name)
 }
 
 func RemoveTodo(id int) bool {
-	if _, ok := todoMap[id]; ok {
-		delete(todoMap, id)
-		return true
-	}
-
-	return false
+	return handler.RemoveTodo(id)
 }
 
 func CompleteTodo(id int, complete bool) bool {
-	if todo, ok := todoMap[id]; ok {
-		todo.Completed = complete
-		return true
-	}
-
-	return false
+	return handler.CompleteTodo(id, complete)
 }
+*/

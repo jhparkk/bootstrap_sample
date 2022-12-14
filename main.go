@@ -1,13 +1,16 @@
 package main
 
 import (
+	"net/http"
+
 	"github.com/urfave/negroni"
 	"jhpark.sinsiway.com/bootstrap/app"
-	"net/http"
 )
 
 func main() {
 	m := app.MakeHandler()
+	defer m.Close()
+
 	n := negroni.Classic()
 	n.UseHandler(m)
 

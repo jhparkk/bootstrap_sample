@@ -55,8 +55,8 @@ func (s *sqlite3Handler) Close() {
 	db.Close()
 }
 
-func newSqlite3Handler() DbHandler {
-	db, err := gorm.Open(sqlite.Open("./test.db"), &gorm.Config{})
+func newSqlite3Handler(filepath string) DbHandler {
+	db, err := gorm.Open(sqlite.Open(filepath), &gorm.Config{})
 	if err != nil {
 		panic(err)
 	}

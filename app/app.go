@@ -97,14 +97,14 @@ func (a *AppHandler) Close() {
 	a.db.Close()
 }
 
-func MakeHandler() *AppHandler {
+func MakeHandler(filepath string) *AppHandler {
 	//todoMap = make(map[int]*Todo)
 	//addTestTodo()
 
 	r := mux.NewRouter()
 	app := &AppHandler{
 		Handler: r,
-		db:      model.NewDbHandler(),
+		db:      model.NewDbHandler(filepath),
 	}
 	r.HandleFunc("/todos", app.getTodoListHandler).Methods("GET")
 	r.HandleFunc("/todos", app.addTodoListHandler).Methods("POST")
